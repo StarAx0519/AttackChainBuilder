@@ -14,9 +14,9 @@ C3: Evidence-Faithful Reconstruction.We refrain from imputing unobserved tactics
 
 These constraints mandate achieving accuracy through hierarchical fusion rather than external augmentation, distinguishing our approach from both SIEM correlation and LLM-based labeling.
 
-![System](System1.png)
+![System](AttackChainBuilder/System1.png)
 
-![System](System2.png)
+![System](AttackChainBuilder/System2.png)
 
 **This repository is intended for local demonstration and paper review. On Windows, reviewers can start the UI with a double-click.**
 
