@@ -1,0 +1,112 @@
+[
+  {
+    "id": "a1",
+    "timestamp": "2024-06-01T08:10:00Z",
+    "attackType": "reconnaissance",
+    "title": "外网主动扫描目标网段",
+    "srcIp": "203.0.113.10",
+    "dstIp": "10.0.0.0/24",
+    "host": "edge-fw",
+    "description": "检测到 Nmap 风格端口与漏洞扫描流量"
+  },
+  {
+    "id": "a2",
+    "timestamp": "2024-06-01T09:20:00Z",
+    "attackType": "sql_injection",
+    "title": "Web 服务器 SQL 注入成功",
+    "srcIp": "203.0.113.10",
+    "dstIp": "10.0.1.20",
+    "host": "web-01",
+    "description": "SQL注入攻击拿下公开 Web 应用"
+  },
+  {
+    "id": "a3",
+    "timestamp": "2024-06-01T09:45:00Z",
+    "attackType": "web_shell",
+    "title": "植入 WebShell",
+    "srcIp": "203.0.113.10",
+    "dstIp": "10.0.1.20",
+    "host": "web-01",
+    "description": "上传蚁剑 WebShell 并执行命令"
+  },
+  {
+    "id": "a4",
+    "timestamp": "2024-06-01T10:15:00Z",
+    "attackType": "powershell",
+    "title": "PowerShell 恶意脚本执行",
+    "srcIp": "10.0.1.20",
+    "host": "web-01",
+    "description": "Encoded PowerShell 下载并执行载荷"
+  },
+  {
+    "id": "a5",
+    "timestamp": "2024-06-01T11:00:00Z",
+    "attackType": "persistence",
+    "title": "注册表启动项持久化",
+    "host": "web-01",
+    "description": "写入 Registry Run Keys 保持后门"
+  },
+  {
+    "id": "a6",
+    "timestamp": "2024-06-01T12:30:00Z",
+    "attackType": "network_scan",
+    "title": "内网服务发现扫描",
+    "srcIp": "10.0.1.20",
+    "host": "web-01",
+    "description": "从跳板机对内网进行 Network Service Scanning"
+  },
+  {
+    "id": "a7",
+    "timestamp": "2024-06-01T13:10:00Z",
+    "attackType": "brute_force",
+    "title": "弱口令爆破 AD 服务器",
+    "srcIp": "10.0.1.20",
+    "dstIp": "10.0.2.5",
+    "host": "ad-01",
+    "description": "对域控进行暴力破解获得有效账户"
+  },
+  {
+    "id": "a8",
+    "timestamp": "2024-06-01T14:00:00Z",
+    "attackType": "lateral_movement",
+    "title": "RDP 横向移动至敏感主机",
+    "srcIp": "10.0.1.20",
+    "dstIp": "10.0.2.50",
+    "host": "dev-pc",
+    "description": "使用合法凭证 RDP 进入开发人员主机"
+  },
+  {
+    "id": "a9",
+    "timestamp": "2024-06-01T15:20:00Z",
+    "attackType": "credential_dump",
+    "title": "LSASS 内存转储",
+    "host": "dev-pc",
+    "description": "使用 Mimikatz 进行凭证访问"
+  },
+  {
+    "id": "a10",
+    "timestamp": "2024-06-01T16:00:00Z",
+    "attackType": "rat",
+    "title": "植入远端控制工具 RAT",
+    "host": "dev-pc",
+    "description": "建立 C2 回连通道"
+  },
+  {
+    "id": "a11",
+    "timestamp": "2024-06-01T17:30:00Z",
+    "attackType": "defense_evasion",
+    "title": "禁用代理并清除痕迹",
+    "host": "dev-pc",
+    "description": "禁用 IE 代理设置，清除部分事件日志"
+  },
+  {
+    "id": "a12",
+    "timestamp": "2024-06-01T19:00:00Z",
+    "attackType": "data_exfiltration",
+    "title": "敏感文件外传",
+    "srcIp": "10.0.2.50",
+    "dstIp": "198.51.100.8",
+    "host": "dev-pc",
+    "description": "通过 HTTPS 渗出 WORD/PPT/PDF 与组织架构资料"
+  }
+]

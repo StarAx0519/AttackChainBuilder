@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<!--
+  Attack Chain Builder — frontend entry (plain HTML/CSS/JS, no framework)
+  Layout: top bar → stats → batch mapping → tactic coverage → chain view
+  Local demo: served by backend/app.js at http://127.0.0.1:3000/
+-->
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Attack Chain Builder</title>
+  <!-- Offline-friendly: no Google Fonts; system font stack -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="bg-grid" aria-hidden="true"></div>
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark"></span>
+      <div>
+        <h1>Attack Chain Builder</h1>
+        <p>威胁告警 → ATT&amp;CK 技战术映射 → 攻击链路构建</p>
+      </div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <!-- Stats：告警映射 + 链路还原 两组 -->
+    <section class="stats-board" aria-label="统计指标">
+      <article class="stats-group" data-group="mapping">
+        <header class="stats-group-head">
+          <h2 class="stats-group-title">告警映射至技战术</h2>
+          <p class="stats-group-desc" id="statMappedSub">本次待用户执行映射</p>
+        </header>
+        <div class="stats-group-metrics">
+          <div class="stat-metric is-history" id="metricMappedCum">
+            <span class="stat-metric-label">历史告警映射总计</span>
+            <div class="stat-metric-row">
+              <strong class="stat-metric-value" id="statMappedCum">0</strong>
+              <span class="stat-metric-unit">条</span>
+            </div>
+          </div>
+          <div class="stat-metric is-session fill-zero" id="metricMappedSession">
+            <span class="stat-metric-label">本次告警映射数</span>
+            <div class="stat-metric-row">
+              <strong class="stat-metric-value" id="statMappedSession">0</strong>
+              <span class="stat-metric-unit">条</span>
+            </div>
+          </div>
+          <div class="stat-metric is-session is-rate fill-zero" id="metricAccuracy">
+            <span class="stat-metric-label">本次攻击技战术映射准确率</span>
+            <div class="stat-metric-row">
+              <strong class="stat-metric-value" id="statAccuracy">0%</strong>
+              <span class="stat-metric-hint" id="statAccuracySub"></span>
+            </div>
+          </div>
+        </div>
+      </article>
+
+      <article class="stats-group" data-group="chains">
+        <header class="stats-group-head">
+          <h2 class="stats-group-title">攻击链路还原构建</h2>
+          <p class="stats-group-desc" id="statChainsSub">本次待用户执行构建</p>
+        </header>
+        <div class="stats-group-metrics">
+          <div class="stat-metric is-history" id="metricChainsCum">
+            <span class="stat-metric-label">历史链路还原总计</span>
+            <div class="stat-metric-row">
+              <strong class="stat-metric-value" id="statChainsCum">0</strong>
+              <span class="stat-metric-unit">条</span>
+            </div>
+          </div>
+          <div class="stat-metric is-session fill-zero" id="metricChainsSession">
+            <span class="stat-metric-label">本次链路还原数</span>
+            <div class="stat-metric-row">
+              <strong class="stat-metric-value" id="statChainsSession">0</strong>
+              <span class="stat-metric-unit">条</span>
+            </div>
+          </div>
+          <div class="stat-metric is-session is-rate fill-zero" id="metricCoverage">
+            <span class="stat-metric-label">本次攻击所使用战术覆盖率</span>
+            <div class="stat-metric-row">
+              <strong class="stat-metric-value" id="statCoverage">0%</strong>
+              <span class="stat-metric-hint" id="statCoverageSub"></span>
+            </div>
+          </div>
+        </div>
+      </article>
+    </section>
+    <!-- 上传告警模块是否有必要？如果需要可以开发来上传和存入该告警数据库，达到待分析的目的；也可以在数据库中增加告警记录，用于前端演示 -->
+    <!-- Batch mapping -->
+    <section class="panel" id="panelMapping">
+      <div class="panel-head">
+        <div class="panel-head-text">
+          <h2>批量 ATT&amp;CK 映射</h2>
+          <p>上传 JSON/CSV 告警文件，或直接粘贴文本</p>
+        </div>
+        <button type="button" class="btn btn-ghost" id="btnPickDbSample" title="从 MongoDB samplealerts 集合选取样本填入文本框">（可选）内置告警样本库（… 条）</button>
+      </div>
+
+      <!-- 上方：输入区（两列对齐） -->
+      <div class="map-input-grid">
+        <div class="map-input-col file-drop-wrap" id="fileCol">
+          <span class="field-label">上传告警文件</span>
+          <div class="file-drop" id="fileDrop">
+            <input type="file" id="fileInput" accept=".json,.csv,.tsv,.txt,.ndjson,.xml,.log,.cef,.leef,.syslog" hidden />
+            <label class="file-drop-hit" for="fileInput">
+              <strong>点击或拖拽上传</strong>
+              <span>JSON / CSV/ 叙述案例等</span>
+              <!-- <span>JSON / NDJSON / CSV / TSV / XML / CEF / LEEF / KV / 叙述案例等</span> -->
+            </label>
+            <div class="file-selected-row">
+              <em id="fileName">未选择文件</em>
+              <button type="button" class="file-remove-btn" id="btnClearFile" hidden title="移除文件，可重新上传" aria-label="移除已选文件">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="map-input-col map-text-block" id="textCol">
+          <label class="field-label" for="alertText">粘贴告警文本</label>
+          <textarea id="alertText" rows="8" placeholder='[{"timestamp":"2024-06-01T08:00:00Z","attackType":"sql_injection","title":"SQLi on web-01","srcIp":"1.2.3.4","description":"..."}]'></textarea>
+        </div>
+      </div>
+
+      <div class="input-source-bar" id="inputSourceBar" data-state="empty">
+        <p class="input-source-status" id="inputSourceStatus">请上传文件或粘贴告警文本</p>
+        <div class="input-source-pick" id="inputSourcePick" hidden>
+          <span class="input-source-pick-label">本次映射使用：</span>
+          <label class="source-option">
+            <input type="radio" name="inputSource" id="sourceFile" value="file" />
+            <span>文件</span>
+          </label>
+          <label class="source-option">
+            <input type="radio" name="inputSource" id="sourceText" value="text" />
+            <span>文本</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <div class="btn-row-main">
+          <button type="button" class="btn btn-primary" id="btnMap">执行批量映射</button>
+          <button type="button" class="btn btn-accent" id="btnBuild">构建攻击链路</button>
+        </div>
+        <button type="button" class="btn btn-ghost" id="btnPipeline">一键映射和构建</button>
+      </div>
+      <p class="hint" id="batchHint">支持 JSON / CSV / 叙述型 APT 案例（含无 T/TA 编号的中文多步攻击，按「第N步」与关键词拆条）。字段名因厂商而异会自动别名归一。映射/构建默认不入库，结果就绪和核验后可以点击对应「存入」按钮。</p>
+      <!-- <p class="hint" id="batchHint">支持 JSON / NDJSON / CSV / TSV / XML / CEF / LEEF / key=value、叙述型 APT 案例（含无 T/TA 编号的中文多步攻击，按「第N步」与关键词拆条）。字段名因厂商而异会自动别名归一。映射/构建默认不入库，结果就绪后点对应「存入」按钮。</p> -->
+      <!-- 下方：映射结果（全宽） -->
+      <div class="map-result-block">
+        <div class="panel-subhead">
+          <h3>映射结果</h3>
+          <button type="button" class="btn btn-persist" id="btnSaveAlerts" hidden title="写入 mappedalerts 集合">存入映射结果</button>
+        </div>
+
+        <div class="filter-bar" id="filterBar">
+          <label class="filter-item">
+            <span>筛选字段</span>
+            <select id="filterField">
+              <option value="all">全部字段</option>
+              <option value="title">告警标题</option>
+              <option value="attackType">攻击类型</option>
+              <option value="srcIp">源 IP</option>
+              <option value="dstIp">目的 IP</option>
+              <option value="host">主机</option>
+              <option value="description">描述</option>
+              <option value="technique">技术编号</option>
+              <option value="tactic">战术</option>
+              <option value="quality">质量等级</option>
+              <option value="method">映射方式</option>
+            </select>
+          </label>
+          <label class="filter-item filter-grow">
+            <span>关键词</span>
+            <input type="search" id="filterKeyword" placeholder="输入关键词搜索…" autocomplete="off" />
+          </label>
+          <label class="filter-item">
+            <span>质量</span>
+            <select id="filterQuality">
+              <option value="">全部</option>
+              <option value="excellent">高置信（excellent）</option>
+              <option value="good">可靠（good）</option>
+              <option value="fair">待复核（fair）</option>
+              <option value="poor">需补充（poor）</option>
+            </select>
+          </label>
+          <label class="filter-item">
+            <span>映射方式</span>
+            <select id="filterMethod">
+              <option value="">全部</option>
+              <option value="explicit">文中标明</option>
+              <option value="rule">类型规则</option>
+              <option value="heuristic">关键词启发</option>
+              <option value="fallback">默认设定</option>
+            </select>
+          </label>
+          <button type="button" class="btn btn-ghost" id="btnClearFilter">清空筛选</button>
+        </div>
+
+        <div class="table-wrap">
+          <table id="mapTable">
+            <thead>
+              <tr>
+                <th>步骤</th>
+                <th>时间</th>
+                <th>告警</th>
+                <th>源 IP</th>
+                <th>目的 IP</th>
+                <th>主机</th>
+                <th>技术</th>
+                <th>战术</th>
+                <th>置信度</th>
+                <th>质量</th>
+                <th>方式</th>
+                <th>描述</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Coverage matrix -->
+    <section class="panel" id="panelCoverage">
+      <div class="panel-head">
+        <div class="panel-head-text">
+          <h2>ATT&amp;CK 战术覆盖矩阵</h2>
+          <p>Kill Chain：Reconnaissance → Impact（14 个战术阶段）</p>
+        </div>
+        <button type="button" class="btn btn-persist" id="btnSaveStats" hidden title="写入 sessionstats 集合">存入统计覆盖</button>
+      </div>
+      <div class="matrix" id="coverageMatrix"></div>
+      <div class="legend">
+        <span><i class="dot covered"></i>已覆盖（实线绿框）</span>
+        <span><i class="dot empty"></i>未覆盖（虚线灰框）</span>
+        <span>数字 = 命中告警数</span>
+      </div>
+    </section>
+
+    <!-- Chains -->
+    <section class="panel" id="panelChains">
+      <div class="panel-head">
+        <div class="panel-head-text">
+          <h2>攻击链路还原（可视化）</h2>
+          <p>按时间排序，按 Kill Chain 阶段分组，并计算持续时间与复杂度评分</p>
+        </div>
+        <button type="button" class="btn btn-persist" id="btnSaveChains" hidden title="写入 attackchains 集合">存入攻击链路</button>
+      </div>
+      <div id="chainList" class="chain-list">
+        <div class="empty-state">执行「构建攻击链路」后在此展示</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- 入库进度（任一分区点存入时显示） -->
+  <div class="persist-progress persist-toast" id="persistProgress" hidden>
+    <div class="persist-progress-head">
+      <strong id="persistProgressTitle">正在入库…</strong>
+      <span id="persistProgressPct">0%</span>
+    </div>
+    <div class="persist-bar" aria-hidden="true"><i id="persistBarFill"></i></div>
+    <ul class="persist-steps" id="persistSteps"></ul>
+    <p class="persist-msg" id="persistMsg"></p>
+  </div>
+
+  <footer class="footer">
+    <span>Attack Chain Builder</span>
+    <span id="batchIdLabel"></span>
+    <span id="apiStatus" class="status-pill">API 检测中…</span>
+  </footer>
+
+  <!-- 描述详情弹层 -->
+  <div class="modal-backdrop" id="descModal" hidden>
+    <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="descModalTitle">
+      <div class="modal-head">
+        <h3 id="descModalTitle">告警描述</h3>
+        <button type="button" class="btn btn-ghost" id="descModalClose">关闭</button>
+      </div>
+      <div class="modal-body" id="descModalBody"></div>
+    </div>
+  </div>
+
+  <!-- 数据源确认弹层：文件与文本同时存在时 -->
+  <div class="modal-backdrop" id="sourceModal" hidden>
+    <div class="modal-card modal-card-sm source-modal-card" role="dialog" aria-modal="true" aria-labelledby="sourceModalTitle">
+      <div class="modal-head source-modal-head">
+        <h3 id="sourceModalTitle">确认映射数据源</h3>
+        <button type="button" class="modal-close-x" id="sourceModalClose" title="关闭" aria-label="关闭">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="source-modal-body">
+        <p id="sourceModalMsg">当前同时存在已选文件与文本框内容，请选择本次映射使用哪一项。</p>
+        <div class="source-modal-actions">
+          <button type="button" class="source-choice-btn" id="sourceModalFile">使用文件</button>
+          <button type="button" class="source-choice-btn" id="sourceModalText">使用文本</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 从库选取告警 -->
+  <div class="modal-backdrop" id="sampleModal" hidden>
+    <div class="modal-card sample-modal-card" role="dialog" aria-modal="true" aria-labelledby="sampleModalTitle">
+      <div class="modal-head">
+        <h3 id="sampleModalTitle">告警列表（内置）</h3>
+        <button type="button" class="modal-close-x" id="sampleModalClose" title="关闭" aria-label="关闭">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="sample-modal-body">
+        <p class="sample-modal-hint" id="sampleModalHint">从集合 samplealerts 读取演示用告警，选中后填入文本框。</p>
+        <div class="sample-list" id="sampleList"></div>
+        <pre class="sample-preview" id="samplePreview" hidden></pre>
+        <div class="sample-modal-actions">
+          <button type="button" class="btn btn-primary" id="sampleModalApply" disabled>填入文本框</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+{
+  "name": "qy-attack-chain-backend",
+  "version": "1.0.0",
+  "description": "ATT&CK mapping and attack chain construction prototype",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js",
+    "dev": "node app.js",
+    "init-db": "node scripts/initDb.js",
+    "seed-ca-samples": "node scripts/seedCaSerializedSamples.js"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "mongoose": "^7.6.3",
+    "multer": "^1.4.5-lts.1",
+    "uuid": "^9.0.1",
+    "xlsx": "^0.18.5"
+  }
+}
